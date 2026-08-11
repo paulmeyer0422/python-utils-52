@@ -1,24 +1,24 @@
-import time
-import requests
-from functools import wraps
+def flatten(list_of_lists):
+    return [item for sublist in list_of_lists for item in sublist]
 
-def retry_request(max_retries=3, backoff_factor=1):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            retries = 0
-            while retries < max_retries:
-                try:
-                    return func(*args, **kwargs)
-                except requests.RequestException:
-                    retries += 1
-                    time.sleep(backoff_factor * (2 ** retries))
-            raise Exception('Max retries exceeded')
-        return wrapper
-    return decorator
+def chunk_list(data, chunk_size):
+    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
 
-@retry_request(max_retries=5, backoff_factor=0.5)
-def fetch_data(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
+from collections import defaultdict
+
+def group_by(data, key_func):
+    grouped = defaultdict(list)
+    for item in data:
+        key = key_func(item)
+        grouped[key].append(item)
+    return dict(grouped)
+
+import json
+
+def save_to_json(data, file_path):
+    with open(file_path, 'w') as f:
+        json.dump(data, f, indent=4)
+
+def load_from_json(file_path):
+    with open(file_path, 'r') as f:
+        return json.load(f)
