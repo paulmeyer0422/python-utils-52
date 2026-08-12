@@ -1,19 +1,31 @@
 import json
 import os
 
-def load_config(file_path, default_config):
-    if not os.path.exists(file_path):
-        return default_config
-    with open(file_path, 'r') as config_file:
-        config = json.load(config_file)
-    return {**default_config, **config}
-
-# Default configuration
 DEFAULT_CONFIG = {
-    'host': 'localhost',
-    'port': 8080,
-    'debug': False
+    'click_interval': 0.1,
+    'click_duration': 10,
+    'click_count': 100,
 }
 
-# Load configuration from file
-config = load_config('config.json', DEFAULT_CONFIG)
+class ConfigLoader:
+    def __init__(self, config_file='config.json'):
+        self.config_file = config_file
+        self.config = {**DEFAULT_CONFIG}
+        self.load_config()
+
+    def load_config(self):
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as file:
+                user_config = json.load(file)
+                self.config.update(user_config)
+
+    def get(self, key, default=None):
+        return self.config.get(key, default)
+
+    def set(self, key, value):
+        self.config[key] = value
+        self.save_config()
+
+    def save_config(self):
+        with open(self.config_file, 'w') as file:
+            json.dump(self.config, file, indent=4)
