@@ -1,17 +1,25 @@
 import time
-import requests
+import random
+import logging
 
-class NetworkError(Exception):
-    pass
+def validate_click_interval(interval):
+    if not isinstance(interval, (int, float)) or interval <= 0:
+        raise ValueError('Click interval must be a positive number.')
 
-def retry_request(url, retries=3, delay=2):
-    for attempt in range(retries):
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            return response.json()
-        except requests.HTTPError as e:
-            if attempt < retries - 1:
-                time.sleep(delay)
-                continue
-            raise NetworkError(f'Failed to retrieve data: {e}') from e
+
+def autoclicker(click_interval, duration):
+    validate_click_interval(click_interval)
+    if not isinstance(duration, (int, float)) or duration <= 0:
+        raise ValueError('Duration must be a positive number.')
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        # Simulate click action
+        print('Clicked!')
+        time.sleep(click_interval)
+
+
+if __name__ == '__main__':
+    try:
+        autoclicker(0.5, 5)
+    except ValueError as e:
+        logging.error(f'Input error: {e}')
