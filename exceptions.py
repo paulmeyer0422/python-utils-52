@@ -3,19 +3,27 @@ class AutoClickerError(Exception):
 
 class ConfigurationError(AutoClickerError):
     def __init__(self, message):
-        super().__init__(f'Configuration Error: {message}')
+        super().__init__(message)
 
-class ClickLimitExceeded(AutoClickerError):
-    def __init__(self, limit):
-        super().__init__(f'Click limit of {limit} exceeded')
-
-class InvalidClickInterval(AutoClickerError):
-    def __init__(self, interval):
-        super().__init__(f'Invalid click interval: {interval}')
-
-class NotRunningError(AutoClickerError):
-    pass
-
-class HandlerError(AutoClickerError):
+class ClickError(AutoClickerError):
     def __init__(self, message):
-        super().__init__(f'Handler Error: {message}')
+        super().__init__(message)
+
+class FrequencyError(AutoClickerError):
+    def __init__(self, message):
+        super().__init__(message)
+
+class InvalidCoordinatesError(ClickError):
+    def __init__(self, x, y):
+        message = f"Invalid click coordinates: ({x}, {y})"
+        super().__init__(message)
+
+class RateLimitExceededError(FrequencyError):
+    def __init__(self, allowed_rate):
+        message = f"Rate limit exceeded. Allowed rate: {allowed_rate} clicks per second"
+        super().__init__(message)
+
+class MissingConfigurationError(ConfigurationError):
+    def __init__(self, config_item):
+        message = f"Missing configuration item: {config_item}"
+        super().__init__(message)
