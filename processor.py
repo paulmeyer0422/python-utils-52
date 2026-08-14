@@ -1,31 +1,36 @@
-from typing import Optional
+import time
+import threading
 
-class ClickProcessor:
-    def __init__(self, click_interval: float) -> None:
-        """Initialize the ClickProcessor with a click interval."""
-        self.click_interval = click_interval
+class AutoClicker:
+    def __init__(self, interval=0.1):
+        self.interval = interval
+        self.running = False
+        self._thread = None
 
-    def process_clicks(self, num_clicks: int, duration: Optional[float] = None) -> None:
-        """Process the specified number of clicks, optionally timed by duration."""
-        if duration is not None:
-            self._process_with_duration(num_clicks, duration)
-        else:
-            self._process_without_duration(num_clicks)
+    def start(self):
+        if not self.running:
+            self.running = True
+            self._thread = threading.Thread(target=self._click)
+            self._thread.daemon = True
+            self._thread.start()
 
-    def _process_with_duration(self, num_clicks: int, duration: float) -> None:
-        import time
-        start_time = time.time()
-        clicks_done = 0
-        while time.time() - start_time < duration and clicks_done < num_clicks:
-            self._click()
-            clicks_done += 1
-            time.sleep(self.click_interval)
+    def stop(self):
+        self.running = False
+        if self._thread:
+            self._thread.join()
 
-    def _process_without_duration(self, num_clicks: int) -> None:
-        for _ in range(num_clicks):
-            self._click()
-            time.sleep(self.click_interval)
+    def _click(self):
+        while self.running:
+            self.perform_click()
+            time.sleep(self.interval)
 
-    def _click(self) -> None:
-        print('Click!') # Simulating a click action
+    @staticmethod
+    def perform_click():
+        print("Click performed")  # Simulated click action
 
+# Example usage
+if __name__ == '__main__':
+    clicker = AutoClicker(0.1)
+    clicker.start()
+    time.sleep(1)
+    clicker.stop()
