@@ -1,36 +1,36 @@
-import time
-import threading
+from typing import List, Tuple
 
-class AutoClicker:
-    def __init__(self, interval=0.1):
-        self.interval = interval
-        self.running = False
-        self._thread = None
+class Processor:
+    def __init__(self, data: List[int]) -> None:
+        self.data = data
 
-    def start(self):
-        if not self.running:
-            self.running = True
-            self._thread = threading.Thread(target=self._click)
-            self._thread.daemon = True
-            self._thread.start()
+    def process(self) -> List[int]:
+        """
+        Process the data by doubling each value.
+        
+        Returns:
+            List[int]: A list of processed integers.
+        """
+        return [self._double_value(d) for d in self.data]
 
-    def stop(self):
-        self.running = False
-        if self._thread:
-            self._thread.join()
+    def _double_value(self, value: int) -> int:
+        """
+        Double the given integer value.
+        
+        Args:
+            value (int): The integer to double.
+        
+        Returns:
+            int: The doubled integer value.
+        """
+        return value * 2
 
-    def _click(self):
-        while self.running:
-            self.perform_click()
-            time.sleep(self.interval)
+    def get_statistics(self) -> Tuple[int, int]:
+        """
+        Get the minimum and maximum values from the data.
+        
+        Returns:
+            Tuple[int, int]: Minimum and maximum values.
+        """
+        return min(self.data), max(self.data) 
 
-    @staticmethod
-    def perform_click():
-        print("Click performed")  # Simulated click action
-
-# Example usage
-if __name__ == '__main__':
-    clicker = AutoClicker(0.1)
-    clicker.start()
-    time.sleep(1)
-    clicker.stop()
