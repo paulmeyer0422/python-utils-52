@@ -1,42 +1,33 @@
 import time
-import random
-import pyautogui
+import threading
 
 class AutoClicker:
-    def __init__(self, interval=1, button='left'):
+    def __init__(self, interval=1):
         self.interval = interval
-        self.button = button
         self.running = False
+        self.thread = None
 
     def start(self):
-        if self.running:
-            raise RuntimeError('Clicker is already running.')
-        self.running = True
-        try:
-            self._click_loop()
-        except Exception as e:
-            self.running = False
-            print(f'Error occurred: {e}')  
+        if not self.running:
+            self.running = True
+            self.thread = threading.Thread(target=self._click_loop)
+            self.thread.start()
 
     def stop(self):
-        if not self.running:
-            raise RuntimeError('Clicker is not running.')
         self.running = False
+        if self.thread:
+            self.thread.join()
 
     def _click_loop(self):
         while self.running:
-            try:
-                pyautogui.click(button=self.button)
-                time.sleep(self.interval)
-            except pyautogui.FailSafeException:
-                self.stop()
-                print('Mouse moved to a corner, stopping clicker.')
-            except Exception as e:
-                self.running = False
-                print(f'Error during clicking: {e}')
+            self.perform_click()
+            time.sleep(self.interval)
+
+    def perform_click(self):
+        print("Click!")  # Simulate a click action
 
 if __name__ == '__main__':
-    clicker = AutoClicker(interval=random.uniform(0.1, 2), button='left')
-    clicker.start()  
-    time.sleep(5)  
+    clicker = AutoClicker(interval=0.5)
+    clicker.start()
+    time.sleep(5)
     clicker.stop()
