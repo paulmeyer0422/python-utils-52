@@ -1,25 +1,36 @@
+import os
 import json
 
-class ConfigLoader:
-    def __init__(self, default_config):
-        self.default_config = default_config
-        self.user_config = {}
+class ConfigError(Exception):
+    pass
 
-    def load(self, config_file):
+class Config:
+    def __init__(self, config_file):
+        self.config_file = config_file
+        self.settings = {}
+        self.load_config()
+
+    def load_config(self):
+        if not os.path.exists(self.config_file):
+            raise ConfigError(f'Config file not found: {self.config_file}')
         try:
-            with open(config_file, 'r') as file:
-                self.user_config = json.load(file)
-        except FileNotFoundError:
-            self.user_config = {}
+            with open(self.config_file, 'r') as f:
+                self.settings = json.load(f)
         except json.JSONDecodeError:
-            self.user_config = {}
+            raise ConfigError('Invalid JSON in config file')
+        except Exception as e:
+            raise ConfigError(f'Error loading config: {str(e)}')
 
-    def get_config(self):
-        return {**self.default_config, **self.user_config}
+    def get(self, key, default=None):
+        return self.settings.get(key, default)
 
-if __name__ == '__main__':
-    default_settings = {'click_interval': 0.1, 'duration': 60}
-    config_loader = ConfigLoader(default_settings)
-    config_loader.load('config.json')
-    config = config_loader.get_config()
-    print(config)
+    def set(self, key, value):
+        self.settings[key] = value
+        self.save_config()
+
+    def save_config(self):
+        try:
+            with open(self.config_file, 'w') as f:
+                json.dump(self.settings, f, indent=4)
+        except Exception as e:
+            raise ConfigError(f'Error saving config: {str(e)}')
