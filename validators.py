@@ -1,22 +1,28 @@
 import re
 
-def is_valid_email(email: str) -> bool:
-    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(regex, email) is not None
+def validate_click_interval(interval: float) -> bool:
+    return interval > 0
 
-def is_valid_url(url: str) -> bool:
-    regex = r'^(http|https)://[\w.-]+(?:\.[\w.-]+)+(\/[\w.-]*)?$'
-    return re.match(regex, url) is not None
 
-def is_positive_integer(value: str) -> bool:
-    return value.isdigit() and int(value) > 0
+def validate_click_count(count: int) -> bool:
+    return count > 0
 
-def is_non_empty_string(value: str) -> bool:
-    return bool(value)
 
-VALIDATORS = {
-    'email': is_valid_email,
-    'url': is_valid_url,
-    'positive_integer': is_positive_integer,
-    'non_empty_string': is_non_empty_string,
-}
+def validate_coordinates(coordinates: tuple[int, int]) -> bool:
+    x, y = coordinates
+    return isinstance(x, int) and isinstance(y, int) and x >= 0 and y >= 0
+
+
+def validate_pattern(pattern: str) -> bool:
+    regex = re.compile("^[a-zA-Z0-9]*$")
+    return bool(regex.match(pattern))
+
+
+def validate_config(config: dict) -> bool:
+    required_keys = ['click_interval', 'click_count', 'click_coordinates', 'click_pattern']
+    for key in required_keys:
+        if key not in config:
+            return False
+        if not isinstance(config[key], (int, float)):
+            return False
+    return True
