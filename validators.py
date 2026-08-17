@@ -1,45 +1,22 @@
-from typing import Any, Dict, Optional
+import re
 
+def is_valid_email(email: str) -> bool:
+    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(regex, email) is not None
 
-def validate_click_rate(click_rate: Optional[float]) -> float:
-    """Validates the click rate.
+def is_valid_url(url: str) -> bool:
+    regex = r'^(http|https)://[\w.-]+(?:\.[\w.-]+)+(\/[\w.-]*)?$'
+    return re.match(regex, url) is not None
 
-    Args:
-        click_rate (Optional[float]): The click rate to validate.
+def is_positive_integer(value: str) -> bool:
+    return value.isdigit() and int(value) > 0
 
-    Returns:
-        float: A valid click rate. Raises ValueError if invalid.
-    """
-    if click_rate is None or click_rate <= 0:
-        raise ValueError('Click rate must be a positive number.')
-    return click_rate
+def is_non_empty_string(value: str) -> bool:
+    return bool(value)
 
-
-def validate_duration(duration: Optional[int]) -> int:
-    """Validates the duration.
-
-    Args:
-        duration (Optional[int]): The duration to validate.
-
-    Returns:
-        int: A valid duration. Raises ValueError if invalid.
-    """
-    if duration is None or duration <= 0:
-        raise ValueError('Duration must be a positive integer.')
-    return duration
-
-
-def validate_position(position: Dict[str, Any]) -> Dict[str, int]:
-    """Validates the position dictionary.
-
-    Args:
-        position (Dict[str, Any]): The position to validate.
-
-    Returns:
-        Dict[str, int]: A valid position dictionary. Raises KeyError if missing.
-    """
-    if 'x' not in position or 'y' not in position:
-        raise KeyError('Position must include keys: x and y.')
-    if not isinstance(position['x'], int) or not isinstance(position['y'], int):
-        raise ValueError('Position coordinates must be integers.')
-    return position
+VALIDATORS = {
+    'email': is_valid_email,
+    'url': is_valid_url,
+    'positive_integer': is_positive_integer,
+    'non_empty_string': is_non_empty_string,
+}
