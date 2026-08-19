@@ -1,36 +1,31 @@
-import os
 import json
+import os
 
-class ConfigError(Exception):
-    pass
+DEFAULT_CONFIG = {
+    'click_interval': 0.1,
+    'max_clicks': 100,
+    'click_duration': 10,
+    'enabled': True
+}
 
-class Config:
-    def __init__(self, config_file):
+class ConfigLoader:
+    def __init__(self, config_file='config.json'):
         self.config_file = config_file
-        self.settings = {}
+        self.config = DEFAULT_CONFIG.copy()
         self.load_config()
 
     def load_config(self):
-        if not os.path.exists(self.config_file):
-            raise ConfigError(f'Config file not found: {self.config_file}')
-        try:
-            with open(self.config_file, 'r') as f:
-                self.settings = json.load(f)
-        except json.JSONDecodeError:
-            raise ConfigError('Invalid JSON in config file')
-        except Exception as e:
-            raise ConfigError(f'Error loading config: {str(e)}')
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as file:
+                user_config = json.load(file)
+                self.config.update(user_config)
 
     def get(self, key, default=None):
-        return self.settings.get(key, default)
+        return self.config.get(key, default)
 
     def set(self, key, value):
-        self.settings[key] = value
-        self.save_config()
+        self.config[key] = value
 
-    def save_config(self):
-        try:
-            with open(self.config_file, 'w') as f:
-                json.dump(self.settings, f, indent=4)
-        except Exception as e:
-            raise ConfigError(f'Error saving config: {str(e)}')
+    def save(self):
+        with open(self.config_file, 'w') as file:
+            json.dump(self.config, file, indent=4)
