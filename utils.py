@@ -1,25 +1,33 @@
 import time
-import random
-import logging
-
-def validate_click_interval(interval):
-    if not isinstance(interval, (int, float)) or interval <= 0:
-        raise ValueError('Click interval must be a positive number.')
+from functools import wraps
 
 
-def autoclicker(click_interval, duration):
-    validate_click_interval(click_interval)
-    if not isinstance(duration, (int, float)) or duration <= 0:
-        raise ValueError('Duration must be a positive number.')
-    end_time = time.time() + duration
-    while time.time() < end_time:
-        # Simulate click action
-        print('Clicked!')
-        time.sleep(click_interval)
+def retry(exceptions, tries=3, delay=1, backoff=2):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return func(*args, **kwargs)
+                except exceptions:
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
-if __name__ == '__main__':
+class NetworkError(Exception):
+    pass
+
+
+@retry((NetworkError, TimeoutError), tries=3, delay=0.5)
+def send_network_ping(url):
+    import urllib.request
     try:
-        autoclicker(0.5, 5)
-    except ValueError as e:
-        logging.error(f'Input error: {e}')
+        response = urllib.request.urlopen(url, timeout=2)
+        return response.status == 200
+    except Exception as e:
+        raise NetworkError(f"Failed to reach {url}: {e}")
