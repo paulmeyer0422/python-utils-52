@@ -1,24 +1,39 @@
 import time
-import requests
+def validate_positive_number(value, min_val=1, max_val=10000):
+    try:
+        num = int(value)
+        if min_val <= num <= max_val:
+            return num
+        return None
+    except ValueError:
+        return None
 
-class NetworkHandler:
-    def __init__(self, retries=3, backoff_factor=0.5):
-        self.retries = retries
-        self.backoff_factor = backoff_factor
+def validate_interval(value):
+    try:
+        num = float(value)
+        if 0.1 <= num <= 10:
+            return num
+        return None
+    except ValueError:
+        return None
 
-    def retry_request(self, url):
-        attempt = 0
-        while attempt < self.retries:
-            try:
-                response = requests.get(url)
-                response.raise_for_status()
-                return response.json()
-            except requests.exceptions.RequestException:
-                attempt += 1
-                wait_time = self.backoff_factor * (2 ** attempt)
-                time.sleep(wait_time)
-        raise Exception('Max retries exceeded')
-
-# Example usage:
-# handler = NetworkHandler()
-# data = handler.retry_request('https://api.example.com/data')
+def main():
+    print("Autoclicker")
+    while True:
+        int_str = input("Interval: ")
+        interval = validate_interval(int_str)
+        if interval is None:
+            print("Invalid")
+            continue
+        cl_str = input("Clicks: ")
+        clicks = validate_positive_number(cl_str)
+        if clicks is None:
+            print("Invalid")
+            continue
+        break
+    for _ in range(clicks):
+        print("Performing click")
+        time.sleep(interval)
+    print("Completed")
+if __name__ == "__main__":
+    main()
