@@ -1,54 +1,30 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 # python-utils-52
 
-A collection of Python utility functions designed to simplify common programming tasks and enhance code efficiency. These lightweight tools can help streamline your workflow and reduce repetitive code.
+python-utils-52 is a lightweight Python autoclicker built for precise mouse automation. It handles repetitive clicking tasks with reliable timing and minimal system overhead.
 
 ## Features
-
-- **String Manipulation**: Includes functions for advanced string formatting, casing transformations, and safe HTML encoding.
-- **Data Conversion**: Tools for converting between various data formats such as JSON, CSV, and XML, ensuring compatibility across applications.
-- **File Operations**: Simplified methods for reading, writing, and deleting files with built-in error handling and logging capabilities.
-- **Date and Time Utilities**: Functions to handle date calculations, formatting, and timezone conversions seamlessly.
+- Configurable click intervals from 10ms to several seconds with optional randomization
+- Support for left, right, and middle mouse buttons
+- Global hotkey controls to start, stop, and adjust speed during operation
+- Fixed-position clicking with optional human-like timing variance
 
 ## Installation
-
-To install the `python-utils-52` package, you can use pip. Open your terminal and run:
-
-```bash
-pip install python-utils-52
-```
-
-If you'd prefer to install the package directly from the source, clone this repository and run the setup script:
 
 ```bash
 git clone https://github.com/Developer/python-utils-52.git
 cd python-utils-52
-python setup.py install
+pip install -r requirements.txt
 ```
 
 ## Basic Usage
 
-Here's a quick example to demonstrate some of the functionality available in `python-utils-52`:
-
 ```python
-from utils import StringUtils, FileUtils, DateUtils
+from python_utils_52 import AutoClicker
 
-# String manipulation
-formatted_string = StringUtils.capitalize_words("hello world!")
-
-# File operations
-FileUtils.write_file("example.txt", "This is a test file.")
-content = FileUtils.read_file("example.txt")
-
-# Date utility
-current_time = DateUtils.get_current_time()
-next_week = DateUtils.add_days(current_time, 7)
-
-print(formatted_string)  # Output: Hello World!
-print(content)           # Output: This is a test file.
-print(next_week)        # Output: (current time + 7 days)
+clicker = AutoClicker(interval=0.25, button="left")
+clicker.start(duration=120)  # Run for 2 minutes
 ```
 
-## License
-
-![MIT License](https://img.shields.io/badge/license-MIT-green)  
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Use `clicker.stop()` or the configured hotkey to interrupt execution.
