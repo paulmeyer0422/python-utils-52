@@ -1,33 +1,27 @@
-import time
-from functools import wraps
+import json
+import os
+from typing import Any, Dict
 
 
-def retry(exceptions, tries=3, delay=1, backoff=2):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            mtries, mdelay = tries, delay
-            while mtries > 1:
-                try:
-                    return func(*args, **kwargs)
-                except exceptions:
-                    time.sleep(mdelay)
-                    mtries -= 1
-                    mdelay *= backoff
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+def load_config(filepath: str) -> Dict[str, Any]:
+    if not os.path.exists(filepath):
+        return {}
+    with open(filepath, "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return {}
 
 
-class NetworkError(Exception):
-    pass
+def save_config(filepath: str, data: Dict[str, Any]) -> None:
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
 
-@retry((NetworkError, TimeoutError), tries=3, delay=0.5)
-def send_network_ping(url):
-    import urllib.request
-    try:
-        response = urllib.request.urlopen(url, timeout=2)
-        return response.status == 200
-    except Exception as e:
-        raise NetworkError(f"Failed to reach {url}: {e}")
+def validate_cps(cps: float, min_cps: float = 0.1, max_cps: float = 100.0) -> float:
+    return max(min_cps, min(cps, max_cps))
+
+
+def calculate_delay(cps: float) -> float:
+    validated = validate_cps(cps)
+    return 1.0 / validated
