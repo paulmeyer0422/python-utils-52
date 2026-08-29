@@ -1,31 +1,27 @@
 import json
-import os
+from pathlib import Path
+from typing import Any, Dict
 
-DEFAULT_CONFIG = {
-    'click_interval': 0.1,
-    'max_clicks': 100,
-    'click_duration': 10,
-    'enabled': True
+DEFAULTS = {
+    "interval": 0.05,
+    "button": "left",
+    "hotkey": "ctrl+alt+c",
+    "max_clicks": 100,
+    "randomize": False,
 }
 
-class ConfigLoader:
-    def __init__(self, config_file='config.json'):
-        self.config_file = config_file
-        self.config = DEFAULT_CONFIG.copy()
-        self.load_config()
+def load_config(config_path: str = "config.json") -> Dict[str, Any]:
+    config = DEFAULTS.copy()
+    path = Path(config_path)
+    if path.is_file():
+        with path.open() as f:
+            user_config = json.load(f)
+        for key, value in user_config.items():
+            if key in config:
+                config[key] = value
+    return config
 
-    def load_config(self):
-        if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as file:
-                user_config = json.load(file)
-                self.config.update(user_config)
-
-    def get(self, key, default=None):
-        return self.config.get(key, default)
-
-    def set(self, key, value):
-        self.config[key] = value
-
-    def save(self):
-        with open(self.config_file, 'w') as file:
-            json.dump(self.config, file, indent=4)
+def save_config(config: Dict[str, Any], config_path: str = "config.json") -> None:
+    path = Path(config_path)
+    with path.open("w") as f:
+        json.dump(config, f, indent=2)
