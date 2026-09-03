@@ -1,36 +1,29 @@
-from typing import List, Tuple
+import pyautogui
+import time
+import random
+from typing import Tuple
 
-class Processor:
-    def __init__(self, data: List[int]) -> None:
-        self.data = data
+def move_and_click(x: int, y: int, duration: float = 0.1) -> None:
+    pyautogui.moveTo(x, y, duration=duration)
+    pyautogui.click()
 
-    def process(self) -> List[int]:
-        """
-        Process the data by doubling each value.
-        
-        Returns:
-            List[int]: A list of processed integers.
-        """
-        return [self._double_value(d) for d in self.data]
+def random_jitter(x: int, y: int, radius: int = 5) -> Tuple[int, int]:
+    new_x = x + random.randint(-radius, radius)
+    new_y = y + random.randint(-radius, radius)
+    return new_x, new_y
 
-    def _double_value(self, value: int) -> int:
-        """
-        Double the given integer value.
-        
-        Args:
-            value (int): The integer to double.
-        
-        Returns:
-            int: The doubled integer value.
-        """
-        return value * 2
+def timed_click_sequence(coords: list, interval: float) -> None:
+    for x, y in coords:
+        pyautogui.click(x, y)
+        time.sleep(interval)
 
-    def get_statistics(self) -> Tuple[int, int]:
-        """
-        Get the minimum and maximum values from the data.
-        
-        Returns:
-            Tuple[int, int]: Minimum and maximum values.
-        """
-        return min(self.data), max(self.data) 
+def safe_exit_check(key: str = 'esc') -> bool:
+    return pyautogui.pixelMatchesColor(0, 0, (0, 0, 0)) # Placeholder logic
 
+def smart_drag(start: Tuple[int, int], end: Tuple[int, int], speed: float = 0.2) -> None:
+    pyautogui.moveTo(start[0], start[1])
+    pyautogui.dragTo(end[0], end[1], duration=speed)
+
+def get_screen_center() -> Tuple[int, int]:
+    width, height = pyautogui.size()
+    return width // 2, height // 2
