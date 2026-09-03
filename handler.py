@@ -1,39 +1,27 @@
 import time
-def validate_positive_number(value, min_val=1, max_val=10000):
-    try:
-        num = int(value)
-        if min_val <= num <= max_val:
-            return num
-        return None
-    except ValueError:
-        return None
+import logging
+from typing import Callable, Any, Tuple, Type
 
-def validate_interval(value):
-    try:
-        num = float(value)
-        if 0.1 <= num <= 10:
-            return num
-        return None
-    except ValueError:
-        return None
+logger = logging.getLogger(__name__)
 
-def main():
-    print("Autoclicker")
-    while True:
-        int_str = input("Interval: ")
-        interval = validate_interval(int_str)
-        if interval is None:
-            print("Invalid")
-            continue
-        cl_str = input("Clicks: ")
-        clicks = validate_positive_number(cl_str)
-        if clicks is None:
-            print("Invalid")
-            continue
-        break
-    for _ in range(clicks):
-        print("Performing click")
-        time.sleep(interval)
-    print("Completed")
-if __name__ == "__main__":
-    main()
+def retry_network_call(
+    tries: int = 3,
+    delay: float = 1.0,
+    backoff: float = 2.0,
+    exceptions: Tuple[Type[Exception], ...] = (Exception,)
+) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            curr_delay = delay
+            for attempt in range(1, tries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    if attempt == tries:
+                        logger.error(f"Failed after {tries} attempts: {e}")
+                        raise
+                    logger.warning(f"Attempt {attempt} failed: {e}. Retrying in {curr_delay}s...")
+                    time.sleep(curr_delay)
+                    curr_delay *= backoff
+        return wrapper
+    return decorator
