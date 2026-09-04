@@ -1,29 +1,33 @@
-import pyautogui
 import time
-import random
-from typing import Tuple
+import functools
+import logging
 
-def move_and_click(x: int, y: int, duration: float = 0.1) -> None:
-    pyautogui.moveTo(x, y, duration=duration)
-    pyautogui.click()
+logger = logging.getLogger(__name__)
 
-def random_jitter(x: int, y: int, radius: int = 5) -> Tuple[int, int]:
-    new_x = x + random.randint(-radius, radius)
-    new_y = y + random.randint(-radius, radius)
-    return new_x, new_y
+def retry(exceptions, tries=3, delay=1, backoff=2):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    logger.warning(f"{e}, retrying in {mdelay}s...")
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
-def timed_click_sequence(coords: list, interval: float) -> None:
-    for x, y in coords:
-        pyautogui.click(x, y)
-        time.sleep(interval)
+class NetworkProcessor:
+    @retry((ConnectionError, TimeoutError), tries=3, delay=2)
+    def fetch_data(self, url):
+        # Simulated network operation
+        pass
 
-def safe_exit_check(key: str = 'esc') -> bool:
-    return pyautogui.pixelMatchesColor(0, 0, (0, 0, 0)) # Placeholder logic
-
-def smart_drag(start: Tuple[int, int], end: Tuple[int, int], speed: float = 0.2) -> None:
-    pyautogui.moveTo(start[0], start[1])
-    pyautogui.dragTo(end[0], end[1], duration=speed)
-
-def get_screen_center() -> Tuple[int, int]:
-    width, height = pyautogui.size()
-    return width // 2, height // 2
+    @retry((IOError,), tries=2, delay=1)
+    def send_click_event(self, event_data):
+        # Simulated server communication
+        pass
