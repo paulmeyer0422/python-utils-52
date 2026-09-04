@@ -1,33 +1,30 @@
 import time
-import functools
-import logging
+from typing import Any, Dict, List
 
-logger = logging.getLogger(__name__)
 
-def retry(exceptions, tries=3, delay=1, backoff=2):
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            mtries, mdelay = tries, delay
-            while mtries > 1:
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    logger.warning(f"{e}, retrying in {mdelay}s...")
-                    time.sleep(mdelay)
-                    mtries -= 1
-                    mdelay *= backoff
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+class ValidationError(Exception):
+    pass
 
-class NetworkProcessor:
-    @retry((ConnectionError, TimeoutError), tries=3, delay=2)
-    def fetch_data(self, url):
-        # Simulated network operation
-        pass
 
-    @retry((IOError,), tries=2, delay=1)
-    def send_click_event(self, event_data):
-        # Simulated server communication
-        pass
+def validate_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    delay = config.get("delay", 0.1)
+    clicks = config.get("clicks", 1)
+    button = config.get("button", "left")
+
+    if not isinstance(delay, (int, float)) or delay <= 0:
+        raise ValidationError("Delay must be a positive number")
+    if not isinstance(clicks, int) or clicks < 0:
+        raise ValidationError("Clicks must be a non-negative integer")
+    if button not in {"left", "right", "middle"}:
+        raise ValidationError("Button must be left, right, or middle")
+
+    return {"delay": float(delay), "clicks": clicks, "button": str(button)}
+
+
+def run_processing_loop(jobs: List[Dict[str, Any]]) -> None:
+    for job in jobs:
+        try:
+            valid_job = validate_config(job)
+            time.sleep(valid_job["delay"])
+        except ValidationError:
+            continue
