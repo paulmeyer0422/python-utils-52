@@ -1,28 +1,27 @@
-import re
+import logging
 
-def validate_click_interval(interval: float) -> bool:
-    return interval > 0
+class ValidationError(Exception):
+    pass
 
+def validate_click_params(interval: float, iterations: int) -> None:
+    if not isinstance(interval, (int, float)) or interval < 0.01:
+        raise ValidationError(f"Invalid interval: {interval}. Must be >= 0.01.")
+    if not isinstance(iterations, int) or iterations < -1:
+        raise ValidationError(f"Invalid iterations: {iterations}. Must be >= -1.")
 
-def validate_click_count(count: int) -> bool:
-    return count > 0
+def process_input(interval: float, iterations: int):
+    try:
+        validate_click_params(interval, iterations)
+        return True
+    except ValidationError as e:
+        logging.error(f"Validation failed: {e}")
+        return False
 
-
-def validate_coordinates(coordinates: tuple[int, int]) -> bool:
-    x, y = coordinates
-    return isinstance(x, int) and isinstance(y, int) and x >= 0 and y >= 0
-
-
-def validate_pattern(pattern: str) -> bool:
-    regex = re.compile("^[a-zA-Z0-9]*$")
-    return bool(regex.match(pattern))
-
-
-def validate_config(config: dict) -> bool:
-    required_keys = ['click_interval', 'click_count', 'click_coordinates', 'click_pattern']
-    for key in required_keys:
-        if key not in config:
-            return False
-        if not isinstance(config[key], (int, float)):
-            return False
-    return True
+def get_sanitized_input(prompt: str, val_type: type):
+    user_input = input(prompt)
+    try:
+        value = val_type(user_input)
+        return value
+    except ValueError:
+        logging.error(f"Invalid type input: {user_input}")
+        return None
