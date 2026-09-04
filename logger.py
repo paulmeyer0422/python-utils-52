@@ -1,43 +1,32 @@
 import logging
-import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
-def setup_logger(name="autoclicker", log_file="autoclicker.log", level=logging.INFO):
+def setup_logger(name: str = "autoclicker", log_file: str = "app.log") -> logging.Logger:
     logger = logging.getLogger(name)
-    logger.setLevel(level)
-    if logger.handlers:
-        return logger
+    logger.setLevel(logging.INFO)
+
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
+    log_path = Path(log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    handler = RotatingFileHandler(
+        log_path,
+        maxBytes=5 * 1024 * 1024,
+        backupCount=3,
+        encoding="utf-8"
+    )
+
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(level)
-    logger.addHandler(file_handler)
-    console_handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
-    console_handler.setLevel(level)
     logger.addHandler(console_handler)
+
     return logger
-
-class ClickLogger:
-    def __init__(self, log_file="autoclicker.log"):
-        self.logger = setup_logger(log_file=log_file)
-
-    def log_click(self, position, button="left"):
-        x, y = position
-        self.logger.info(f"Click at ({x}, {y}) using {button} button")
-
-    def log_action(self, action, details=None):
-        msg = action
-        if details:
-            msg += f" - {details}"
-        self.logger.info(msg)
-
-    def log_error(self, error_msg):
-        self.logger.error(error_msg)
-
-    def log_warning(self, warning_msg):
-        self.logger.warning(warning_msg)
-
-    def shutdown(self):
-        logging.shutdown()
