@@ -1,43 +1,25 @@
 import time
-import threading
-from typing import Tuple, Optional
+import pyautogui
+from typing import Tuple
 
-class ClickProcessor:
-    def __init__(self, interval: float = 0.1, button: str = "left"):
-        if interval <= 0:
-            raise ValueError("Interval must be a positive float value")
-        if button not in ("left", "right", "middle"):
-            raise ValueError("Invalid mouse button specified")
-        
-        self.interval = interval
-        self.button = button
-        self._running = False
-        self._thread: Optional[threading.Thread] = None
+def move_and_click(coords: Tuple[int, int], clicks: int = 1, interval: float = 0.1) -> None:
+    pyautogui.click(x=coords[0], y=coords[1], clicks=clicks, interval=interval)
 
-    def _click_loop(self, coords: Optional[Tuple[int, int]]) -> None:
-        while self._running:
-            try:
-                if coords is not None:
-                    x, y = coords
-                    if x < 0 or y < 0:
-                        raise ValueError("Coordinates must be non-negative integers")
-                
-                time.sleep(self.interval)
-            except ValueError:
-                self._running = False
-                raise
-            except Exception:
-                self._running = False
-                break
+def safe_execute(action, *args, **kwargs):
+    try:
+        return action(*args, **kwargs)
+    except pyautogui.FailSafeException:
+        return None
 
-    def start(self, coords: Optional[Tuple[int, int]] = None) -> None:
-        if self._running:
-            return
-        self._running = True
-        self._thread = threading.Thread(target=self._click_loop, args=(coords,), daemon=True)
-        self._thread.start()
+def drag_to(start: Tuple[int, int], end: Tuple[int, int], duration: float = 0.5) -> None:
+    pyautogui.moveTo(*start)
+    pyautogui.dragTo(*end, duration=duration)
 
-    def stop(self) -> None:
-        self._running = False
-        if self._thread:
-            self._thread.join(timeout=2.0)
+def get_screen_size() -> Tuple[int, int]:
+    return pyautogui.size()
+
+def delay(seconds: float) -> None:
+    time.sleep(seconds)
+
+def capture_mouse_position() -> Tuple[int, int]:
+    return pyautogui.position()
