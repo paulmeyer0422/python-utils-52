@@ -1,18 +1,29 @@
-import re
+from typing import Any, Union
 
-def validate_coordinates(x: int, y: int) -> bool:
-    return isinstance(x, int) and isinstance(y, int) and x >= 0 and y >= 0
 
-def validate_interval(interval: float) -> bool:
-    return isinstance(interval, (int, float)) and interval >= 0.001
+class ValidationError(Exception):
+    pass
 
-def validate_hotkey(key: str) -> bool:
-    if not isinstance(key, str) or len(key) == 0:
-        return False
-    return bool(re.match(r'^[a-zA-Z0-9]+$', key))
 
-def validate_click_count(count: int) -> bool:
-    return isinstance(count, int) and (count > 0 or count == -1)
+def validate_interval(value: Any) -> float:
+    if not isinstance(value, (int, float)):
+        raise ValidationError(f"Interval must be a number, got {type(value).__name__}")
+    if value <= 0:
+        raise ValidationError("Interval must be a positive number")
+    return float(value)
 
-def sanitize_input(value: str) -> str:
-    return str(value).strip().lower()
+
+def validate_coordinates(x: Any, y: Any) -> tuple[int, int]:
+    try:
+        xi, yi = int(x), int(y)
+    except (ValueError, TypeError):
+        raise ValidationError("Coordinates must be integers")
+    if xi < 0 or yi < 0:
+        raise ValidationError("Coordinates cannot be negative")
+    return xi, yi
+
+
+def validate_clicks(count: Any) -> int:
+    if not isinstance(count, int) or count < 0:
+        raise ValidationError("Click count must be a non-negative integer")
+    return count
