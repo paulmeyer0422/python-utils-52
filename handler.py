@@ -1,27 +1,29 @@
 import time
-import logging
-from typing import Callable, Any, Tuple, Type
+import pyautogui
+from threading import Thread, Event
 
-logger = logging.getLogger(__name__)
+class ClickHandler:
+    def __init__(self, interval: float, button: str = 'left'):
+        self.interval = interval
+        self.button = button
+        self._running = Event()
+        self._thread = None
 
-def retry_network_call(
-    tries: int = 3,
-    delay: float = 1.0,
-    backoff: float = 2.0,
-    exceptions: Tuple[Type[Exception], ...] = (Exception,)
-) -> Callable:
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            curr_delay = delay
-            for attempt in range(1, tries + 1):
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    if attempt == tries:
-                        logger.error(f"Failed after {tries} attempts: {e}")
-                        raise
-                    logger.warning(f"Attempt {attempt} failed: {e}. Retrying in {curr_delay}s...")
-                    time.sleep(curr_delay)
-                    curr_delay *= backoff
-        return wrapper
-    return decorator
+    def _run(self) -> None:
+        while self._running.is_set():
+            pyautogui.click(button=self.button)
+            time.sleep(self.interval)
+
+    def start(self) -> None:
+        if not self._running.is_set():
+            self._running.set()
+            self._thread = Thread(target=self._run, daemon=True)
+            self._thread.start()
+
+    def stop(self) -> None:
+        self._running.clear()
+        if self._thread:
+            self._thread.join()
+
+    def update_interval(self, interval: float) -> None:
+        self.interval = max(0.01, interval)
