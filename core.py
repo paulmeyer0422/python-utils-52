@@ -1,33 +1,42 @@
-import time
-import threading
+import json
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Dict, Any
 
-class AutoClicker:
-    def __init__(self, interval=1):
-        self.interval = interval
-        self.running = False
-        self.thread = None
+@dataclass
+class ClickProfile:
+    interval: float
+    button: str
+    iterations: int
 
-    def start(self):
-        if not self.running:
-            self.running = True
-            self.thread = threading.Thread(target=self._click_loop)
-            self.thread.start()
+class ClickDataManager:
+    def __init__(self, storage_path: str = "config.json"):
+        self.path = Path(storage_path)
 
-    def stop(self):
-        self.running = False
-        if self.thread:
-            self.thread.join()
+    def save_profile(self, name: str, profile: ClickProfile) -> None:
+        data = self._load_all()
+        data[name] = asdict(profile)
+        with open(self.path, "w") as f:
+            json.dump(data, f, indent=4)
 
-    def _click_loop(self):
-        while self.running:
-            self._perform_click()
-            time.sleep(self.interval)
+    def get_profile(self, name: str) -> ClickProfile:
+        data = self._load_all()
+        if name not in data:
+            raise ValueError(f"Profile {name} not found")
+        return ClickProfile(**data[name])
 
-    def _perform_click(self):
-        print('Click!')  # Simulated click action
+    def _load_all(self) -> Dict[str, Any]:
+        if not self.path.exists():
+            return {}
+        with open(self.path, "r") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return {}
 
-if __name__ == '__main__':
-    autoclicker = AutoClicker(interval=0.5)
-    autoclicker.start()
-    time.sleep(5)
-    autoclicker.stop()
+    def delete_profile(self, name: str) -> None:
+        data = self._load_all()
+        if name in data:
+            del data[name]
+            with open(self.path, "w") as f:
+                json.dump(data, f, indent=4)
