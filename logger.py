@@ -1,30 +1,32 @@
 import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
+import sys
+from typing import Optional
 
-def setup_logger(name: str = "autoclicker", log_file: str = "app.log") -> logging.Logger:
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.INFO)
 
-    if not logger.handlers:
-        path = Path(log_file)
-        path.parent.mkdir(parents=True, exist_ok=True)
+class AutoClickerLogger:
+    """Handles application-wide logging for the autoclicker."""
 
-        handler = RotatingFileHandler(
-            log_file,
-            maxBytes=1024 * 1024 * 5,
-            backupCount=3,
-            encoding="utf-8"
-        )
-        
-        formatter = logging.Formatter(
+    def __init__(self, name: str = "autoclicker", level: int = logging.INFO) -> None:
+        self.logger: logging.Logger = logging.getLogger(name)
+        self.logger.setLevel(level)
+        self._setup_handler()
+
+    def _setup_handler(self) -> None:
+        formatter: logging.Formatter = logging.Formatter(
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
+        handler: logging.StreamHandler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        self.logger.addHandler(handler)
 
-        console = logging.StreamHandler()
-        console.setFormatter(formatter)
-        logger.addHandler(console)
+    def info(self, message: str) -> None:
+        """Log informational messages."""
+        self.logger.info(message)
 
-    return logger
+    def error(self, message: str, exc_info: Optional[bool] = False) -> None:
+        """Log error messages with optional exception info."""
+        self.logger.error(message, exc_info=exc_info)
+
+    def warning(self, message: str) -> None:
+        """Log warning messages."""
+        self.logger.warning(message)
