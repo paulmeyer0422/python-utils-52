@@ -1,28 +1,36 @@
-import logging
-from logging.handlers import RotatingFileHandler
-import os
-from pathlib import Path
+import random
+import time
+from typing import Tuple, Optional
 
-def get_logger(name: str = "autoclicker", log_dir: str = "logs", level: int = logging.INFO) -> logging.Logger:
-    logger = logging.getLogger(name)
-    if logger.handlers:
-        return logger
-    logger.setLevel(level)
-    Path(log_dir).mkdir(parents=True, exist_ok=True)
-    log_file = os.path.join(log_dir, f"{name}.log")
-    file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=10 * 1024 * 1024,
-        backupCount=5
-    )
-    file_handler.setLevel(level)
-    formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-    )
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(level)
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-    return logger
+
+def cps_to_interval(cps: float) -> float:
+    if cps <= 0:
+        raise ValueError("CPS must be greater than zero.")
+    return 1.0 / cps
+
+
+def apply_jitter(interval: float, jitter_percentage: float) -> float:
+    if not 0 <= jitter_percentage <= 100:
+        raise ValueError("Jitter percentage must be between 0 and 100.")
+    if jitter_percentage == 0:
+        return interval
+    deviation = interval * (jitter_percentage / 100.0)
+    return max(0.001, interval + random.uniform(-deviation, deviation))
+
+
+def parse_coordinates(coords: str) -> Optional[Tuple[int, int]]:
+    try:
+        parts = coords.split(",")
+        if len(parts) != 2:
+            return None
+        return int(parts[0].strip()), int(parts[1].strip())
+    except ValueError:
+        return None
+
+
+def precise_sleep(duration: float) -> None:
+    target = time.perf_counter() + duration
+    while time.perf_counter() < target:
+        remaining = target - time.perf_counter()
+        if remaining > 0.01:
+            time.sleep(remaining - 0.005)
