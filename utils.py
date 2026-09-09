@@ -1,27 +1,23 @@
-import json
-import os
-from typing import Any, Dict
+import time
+import functools
+import logging
+from typing import Callable, Any
 
+logger = logging.getLogger(__name__)
 
-def load_config(filepath: str) -> Dict[str, Any]:
-    if not os.path.exists(filepath):
-        return {}
-    with open(filepath, "r", encoding="utf-8") as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return {}
-
-
-def save_config(filepath: str, data: Dict[str, Any]) -> None:
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
-
-
-def validate_cps(cps: float, min_cps: float = 0.1, max_cps: float = 100.0) -> float:
-    return max(min_cps, min(cps, max_cps))
-
-
-def calculate_delay(cps: float) -> float:
-    validated = validate_cps(cps)
-    return 1.0 / validated
+def retry(exceptions: tuple = (Exception,), retries: int = 3, delay: float = 1.0):
+    def decorator(func: Callable):
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            last_exception = None
+            for attempt in range(retries):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    last_exception = e
+                    logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying in {delay}s...")
+                    time.sleep(delay)
+            logger.error(f"Failed after {retries} attempts. Final error: {last_exception}")
+            raise last_exception
+        return wrapper
+    return decorator
