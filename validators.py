@@ -1,38 +1,32 @@
-from typing import Any, Tuple, Optional
+import re
 
-class InputValidationError(Exception):
-    pass
+class ClickValidator:
+    @staticmethod
+    def is_valid_interval(interval: float) -> bool:
+        return isinstance(interval, (int, float)) and interval >= 0.01
 
-def validate_click_params(interval: Any, duration: Any) -> Tuple[float, float]:
-    try:
-        f_interval = float(interval)
-        f_duration = float(duration)
-    except (ValueError, TypeError):
-        raise InputValidationError("Parameters must be numeric")
+    @staticmethod
+    def is_valid_coordinate(coord: int) -> bool:
+        return isinstance(coord, int) and coord >= 0
 
-    if f_interval < 0.01:
-        raise InputValidationError("Interval too low, minimum 0.01")
-    if f_duration < 0:
-        raise InputValidationError("Duration cannot be negative")
+    @staticmethod
+    def is_valid_button(button: str) -> bool:
+        return button in {'left', 'right', 'middle'}
 
-    return f_interval, f_duration
+    @staticmethod
+    def validate_config(config: dict) -> bool:
+        required = {'interval', 'button', 'x', 'y'}
+        if not all(k in config for k in required):
+            return False
+        
+        return (
+            ClickValidator.is_valid_interval(config['interval']) and
+            ClickValidator.is_valid_button(config['button']) and
+            ClickValidator.is_valid_coordinate(config['x']) and
+            ClickValidator.is_valid_coordinate(config['y'])
+        )
 
-def validate_coordinates(x: Any, y: Any) -> Tuple[int, int]:
-    try:
-        i_x = int(x)
-        i_y = int(y)
-    except (ValueError, TypeError):
-        raise InputValidationError("Coordinates must be integers")
-
-    if i_x < 0 or i_y < 0:
-        raise InputValidationError("Coordinates must be non-negative")
-
-    return i_x, i_y
-
-def sanitize_input(value: Any, default: Any = None) -> Any:
-    if value is None:
-        return default
-    try:
-        return str(value).strip()
-    except Exception:
-        return default
+class KeyValidator:
+    @staticmethod
+    def is_valid_key(key: str) -> bool:
+        return bool(re.match(r'^[a-z0-9_]{1,10}$', key))
