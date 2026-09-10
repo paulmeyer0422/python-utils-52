@@ -1,32 +1,24 @@
-import re
+def validate_click_params(interval: float, count: int) -> bool:
+    if not isinstance(interval, (int, float)) or interval < 0.01:
+        return False
+    if not isinstance(count, int) or count < 0:
+        return False
+    return True
 
-class ClickValidator:
-    @staticmethod
-    def is_valid_interval(interval: float) -> bool:
-        return isinstance(interval, (int, float)) and interval >= 0.01
+def validate_coordinates(x: int, y: int) -> bool:
+    if not isinstance(x, int) or not isinstance(y, int):
+        return False
+    return x >= 0 and y >= 0
 
-    @staticmethod
-    def is_valid_coordinate(coord: int) -> bool:
-        return isinstance(coord, int) and coord >= 0
+def sanitize_input(data: dict) -> dict:
+    try:
+        interval = float(data.get('interval', 0.1))
+        count = int(data.get('count', 1))
+        x = int(data.get('x', 0))
+        y = int(data.get('y', 0))
 
-    @staticmethod
-    def is_valid_button(button: str) -> bool:
-        return button in {'left', 'right', 'middle'}
-
-    @staticmethod
-    def validate_config(config: dict) -> bool:
-        required = {'interval', 'button', 'x', 'y'}
-        if not all(k in config for k in required):
-            return False
-        
-        return (
-            ClickValidator.is_valid_interval(config['interval']) and
-            ClickValidator.is_valid_button(config['button']) and
-            ClickValidator.is_valid_coordinate(config['x']) and
-            ClickValidator.is_valid_coordinate(config['y'])
-        )
-
-class KeyValidator:
-    @staticmethod
-    def is_valid_key(key: str) -> bool:
-        return bool(re.match(r'^[a-z0-9_]{1,10}$', key))
+        if validate_click_params(interval, count) and validate_coordinates(x, y):
+            return {'interval': interval, 'count': count, 'x': x, 'y': y}
+    except (ValueError, TypeError):
+        pass
+    return {'interval': 0.1, 'count': 1, 'x': 0, 'y': 0}
