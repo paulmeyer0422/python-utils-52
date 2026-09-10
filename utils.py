@@ -1,23 +1,29 @@
 import time
-import functools
-import logging
-from typing import Callable, Any
+import pyautogui
+from typing import Tuple, Optional
 
-logger = logging.getLogger(__name__)
+def perform_click(position: Tuple[int, int], interval: float = 0.1) -> None:
+    """Execute mouse click at screen coordinates."""
+    pyautogui.click(x=position[0], y=position[1])
+    time.sleep(interval)
 
-def retry(exceptions: tuple = (Exception,), retries: int = 3, delay: float = 1.0):
-    def decorator(func: Callable):
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            last_exception = None
-            for attempt in range(retries):
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    last_exception = e
-                    logger.warning(f"Attempt {attempt + 1} failed: {e}. Retrying in {delay}s...")
-                    time.sleep(delay)
-            logger.error(f"Failed after {retries} attempts. Final error: {last_exception}")
-            raise last_exception
-        return wrapper
-    return decorator
+def get_mouse_position() -> Tuple[int, int]:
+    """Retrieve current mouse cursor screen coordinates."""
+    return pyautogui.position()
+
+def safe_execute(action: callable, *args, **kwargs) -> Optional[any]:
+    """Execute function with basic exception suppression."""
+    try:
+        return action(*args, **kwargs)
+    except Exception:
+        return None
+
+class ClickerConfig:
+    def __init__(self, delay: float, count: int) -> None:
+        self.delay: float = delay
+        self.count: int = count
+
+def run_sequence(coords: Tuple[int, int], config: ClickerConfig) -> None:
+    """Execute repeated clicks based on config."""
+    for _ in range(config.count):
+        perform_click(coords, config.delay)
