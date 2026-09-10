@@ -1,30 +1,37 @@
-import time
-import urllib.request
-import urllib.error
-from typing import Callable, Any
+import json
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Dict, Any
 
-class NetworkError(Exception):
-    """Custom exception for network operations."""
-    pass
+@dataclass
+class ClickProfile:
+    interval: float
+    button: str
+    iterations: int
 
-def retry_on_failure(retries: int = 3, delay: float = 1.0, backoff: float = 2.0):
-    """Decorator to retry network operations with exponential backoff."""
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            current_delay = delay
-            for attempt in range(retries):
-                try:
-                    return func(*args, **kwargs)
-                except (urllib.error.URLError, ConnectionError) as e:
-                    if attempt == retries - 1:
-                        raise NetworkError(f"Failed after {retries} attempts: {e}") from e
-                    time.sleep(current_delay)
-                    current_delay *= backoff
-        return wrapper
-    return decorator
+class ClickDataManager:
+    def __init__(self, storage_path: str = "config.json"):
+        self.path = Path(storage_path)
 
-@retry_on_failure(retries=3, delay=0.5)
-def fetch_remote_config(url: str) -> str:
-    """Fetches remote configuration for the autoclicker."""
-    with urllib.request.urlopen(url, timeout=5) as response:
-        return response.read().decode('utf-8')
+    def save_profile(self, name: str, profile: ClickProfile) -> None:
+        data = self._load_all()
+        data[name] = asdict(profile)
+        self.path.write_text(json.dumps(data, indent=4))
+
+    def get_profile(self, name: str) -> ClickProfile:
+        data = self._load_all()
+        if name not in data:
+            raise ValueError(f"Profile {name} not found")
+        return ClickProfile(**data[name])
+
+    def _load_all(self) -> Dict[str, Any]:
+        if not self.path.exists():
+            return {}
+        with open(self.path, "r") as f:
+            return json.load(f)
+
+    def delete_profile(self, name: str) -> None:
+        data = self._load_all()
+        if name in data:
+            del data[name]
+            self.path.write_text(json.dumps(data, indent=4))
