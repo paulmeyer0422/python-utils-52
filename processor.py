@@ -1,25 +1,33 @@
 import time
-import pyautogui
-from typing import Tuple
+import threading
+from typing import Callable
 
-def move_and_click(coords: Tuple[int, int], clicks: int = 1, interval: float = 0.1) -> None:
-    pyautogui.click(x=coords[0], y=coords[1], clicks=clicks, interval=interval)
+class ClickProcessor:
+    def __init__(self, interval: float):
+        self.interval = interval
+        self._running = False
+        self._thread = None
 
-def safe_execute(action, *args, **kwargs):
-    try:
-        return action(*args, **kwargs)
-    except pyautogui.FailSafeException:
-        return None
+    def _execute(self, action: Callable[[], None]) -> None:
+        last_time = time.perf_counter()
+        while self._running:
+            action()
+            next_time = last_time + self.interval
+            sleep_time = next_time - time.perf_counter()
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+            last_time = time.perf_counter()
 
-def drag_to(start: Tuple[int, int], end: Tuple[int, int], duration: float = 0.5) -> None:
-    pyautogui.moveTo(*start)
-    pyautogui.dragTo(*end, duration=duration)
+    def start(self, action: Callable[[], None]) -> None:
+        if not self._running:
+            self._running = True
+            self._thread = threading.Thread(target=self._execute, args=(action,), daemon=True)
+            self._thread.start()
 
-def get_screen_size() -> Tuple[int, int]:
-    return pyautogui.size()
+    def stop(self) -> None:
+        self._running = False
+        if self._thread:
+            self._thread.join()
 
-def delay(seconds: float) -> None:
-    time.sleep(seconds)
-
-def capture_mouse_position() -> Tuple[int, int]:
-    return pyautogui.position()
+    def update_interval(self, new_interval: float) -> None:
+        self.interval = max(0.001, new_interval)
