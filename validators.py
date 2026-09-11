@@ -1,24 +1,31 @@
-def validate_click_params(interval: float, count: int) -> bool:
-    if not isinstance(interval, (int, float)) or interval < 0.01:
-        return False
-    if not isinstance(count, int) or count < 0:
-        return False
-    return True
+import re
+from typing import Any, Optional
+
+def validate_interval(value: float) -> bool:
+    return isinstance(value, (int, float)) and value > 0
 
 def validate_coordinates(x: int, y: int) -> bool:
-    if not isinstance(x, int) or not isinstance(y, int):
+    return all(isinstance(val, int) and val >= 0 for val in (x, y))
+
+def validate_key_binding(key: str) -> bool:
+    if not isinstance(key, str) or len(key) > 1:
         return False
-    return x >= 0 and y >= 0
+    return bool(re.match(r'[a-zA-Z0-9]', key))
 
-def sanitize_input(data: dict) -> dict:
-    try:
-        interval = float(data.get('interval', 0.1))
-        count = int(data.get('count', 1))
-        x = int(data.get('x', 0))
-        y = int(data.get('y', 0))
+def validate_click_count(count: int) -> bool:
+    return isinstance(count, int) and (count > 0 or count == -1)
 
-        if validate_click_params(interval, count) and validate_coordinates(x, y):
-            return {'interval': interval, 'count': count, 'x': x, 'y': y}
-    except (ValueError, TypeError):
-        pass
-    return {'interval': 0.1, 'count': 1, 'x': 0, 'y': 0}
+def sanitize_input(value: Any) -> Optional[Any]:
+    if value is None:
+        return None
+    return str(value).strip()
+
+def is_valid_config(config: dict) -> bool:
+    required_keys = {'interval', 'x', 'y', 'key'}
+    if not all(k in config for k in required_keys):
+        return False
+    return (
+        validate_interval(config['interval']) and
+        validate_coordinates(config['x'], config['y']) and
+        validate_key_binding(config['key'])
+    )
