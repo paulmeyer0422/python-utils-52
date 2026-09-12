@@ -1,27 +1,30 @@
 import time
-import functools
-import logging
+import pyautogui
+from typing import Tuple
 
-logger = logging.getLogger(__name__)
+def click_at(x: int, y: int, interval: float = 0.0) -> None:
+    pyautogui.click(x, y)
+    if interval > 0:
+        time.sleep(interval)
 
-def retry(exceptions, tries=3, delay=1, backoff=2):
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            t, d = tries, delay
-            while t > 1:
-                try:
-                    return func(*args, **kwargs)
-                except exceptions as e:
-                    logger.warning(f'{func.__name__} failed: {e}, retrying in {d}s...')
-                    time.sleep(d)
-                    t -= 1
-                    d *= backoff
-            return func(*args, **kwargs)
-        return wrapper
-    return decorator
+def get_mouse_position() -> Tuple[int, int]:
+    return pyautogui.position()
 
-@retry((ConnectionError, TimeoutError), tries=3, delay=2)
-def network_request(url):
-    # Simulate network operation
-    pass
+def safe_move(x: int, y: int, duration: float = 0.1) -> None:
+    pyautogui.moveTo(x, y, duration=duration)
+
+def perform_double_click(x: int, y: int) -> None:
+    pyautogui.doubleClick(x, y)
+
+def wait_for_seconds(seconds: float) -> None:
+    time.sleep(seconds)
+
+def is_pixel_color(x: int, y: int, rgb: Tuple[int, int, int], tolerance: int = 0) -> bool:
+    pixel = pyautogui.pixel(x, y)
+    if tolerance == 0:
+        return pixel == rgb
+    return all(abs(p - c) <= tolerance for p, c in zip(pixel, rgb))
+
+def drag_mouse(x1: int, y1: int, x2: int, y2: int, duration: float = 0.5) -> None:
+    pyautogui.moveTo(x1, y1)
+    pyautogui.dragTo(x2, y2, duration=duration, button='left')
