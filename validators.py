@@ -1,31 +1,52 @@
-import re
-from typing import Any, Optional
+from typing import Any, Tuple, Union
 
-def validate_interval(value: float) -> bool:
-    return isinstance(value, (int, float)) and value > 0
 
-def validate_coordinates(x: int, y: int) -> bool:
-    return all(isinstance(val, int) and val >= 0 for val in (x, y))
+class ValidationError(ValueError):
+    pass
 
-def validate_key_binding(key: str) -> bool:
-    if not isinstance(key, str) or len(key) > 1:
-        return False
-    return bool(re.match(r'[a-zA-Z0-9]', key))
 
-def validate_click_count(count: int) -> bool:
-    return isinstance(count, int) and (count > 0 or count == -1)
+def validate_interval(interval: Any) -> float:
+    try:
+        val = float(interval)
+        if val <= 0:
+            raise ValueError
+        return val
+    except (TypeError, ValueError):
+        raise ValidationError(
+            f"Interval must be a positive number, got {interval}"
+        )
 
-def sanitize_input(value: Any) -> Optional[Any]:
-    if value is None:
+
+def validate_button(button: Any) -> str:
+    allowed = {"left", "right", "middle"}
+    if not isinstance(button, str) or button.lower() not in allowed:
+        raise ValidationError(
+            f"Button must be one of {allowed}, got {button}"
+        )
+    return button.lower()
+
+
+def validate_click_count(count: Any) -> int:
+    try:
+        val = int(count)
+        if val < 0:
+            raise ValueError
+        return val
+    except (TypeError, ValueError):
+        raise ValidationError(
+            f"Click count must be a non-negative integer, got {count}"
+        )
+
+
+def validate_coordinates(coords: Any) -> Union[Tuple[int, int], None]:
+    if coords is None:
         return None
-    return str(value).strip()
-
-def is_valid_config(config: dict) -> bool:
-    required_keys = {'interval', 'x', 'y', 'key'}
-    if not all(k in config for k in required_keys):
-        return False
-    return (
-        validate_interval(config['interval']) and
-        validate_coordinates(config['x'], config['y']) and
-        validate_key_binding(config['key'])
-    )
+    if (
+        not isinstance(coords, (tuple, list))
+        or len(coords) != 2
+        or not all(isinstance(x, int) and x >= 0 for x in coords)
+    ):
+        raise ValidationError(
+            f"Coordinates must be a tuple of two non-negative integers or None, got {coords}"
+        )
+    return (int(coords[0]), int(coords[1]))
