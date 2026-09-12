@@ -1,33 +1,32 @@
+import logging
+import pyautogui
 import time
-import threading
-from typing import Callable
+from typing import Tuple
 
 class ClickProcessor:
-    def __init__(self, interval: float):
-        self.interval = interval
-        self._running = False
-        self._thread = None
+    def __init__(self, interval: float = 0.1):
+        self.interval = max(0.01, min(interval, 60.0))
+        self.logger = logging.getLogger(__name__)
 
-    def _execute(self, action: Callable[[], None]) -> None:
-        last_time = time.perf_counter()
-        while self._running:
-            action()
-            next_time = last_time + self.interval
-            sleep_time = next_time - time.perf_counter()
-            if sleep_time > 0:
-                time.sleep(sleep_time)
-            last_time = time.perf_counter()
+    def execute_click(self, x: int, y: int) -> bool:
+        try:
+            screen_width, screen_height = pyautogui.size()
+            if not (0 <= x < screen_width and 0 <= y < screen_height):
+                raise ValueError(f"Coordinates ({x}, {y}) out of screen bounds")
+            
+            pyautogui.click(x, y)
+            time.sleep(self.interval)
+            return True
+        except pyautogui.FailSafeException:
+            self.logger.error("failsafe triggered by user")
+            return False
+        except Exception as e:
+            self.logger.error(f"click execution failure: {e}")
+            return False
 
-    def start(self, action: Callable[[], None]) -> None:
-        if not self._running:
-            self._running = True
-            self._thread = threading.Thread(target=self._execute, args=(action,), daemon=True)
-            self._thread.start()
-
-    def stop(self) -> None:
-        self._running = False
-        if self._thread:
-            self._thread.join()
-
-    def update_interval(self, new_interval: float) -> None:
-        self.interval = max(0.001, new_interval)
+    def batch_process(self, coordinates: list[Tuple[int, int]]) -> int:
+        success_count = 0
+        for x, y in coordinates:
+            if self.execute_click(x, y):
+                success_count += 1
+        return success_count
